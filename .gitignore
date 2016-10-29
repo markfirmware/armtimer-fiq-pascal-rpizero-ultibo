@@ -1,0 +1,5 @@
+*.elf
+*.exe
+*.img
+*.o
+*.ppu

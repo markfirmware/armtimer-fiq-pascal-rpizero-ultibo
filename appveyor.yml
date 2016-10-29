@@ -1,0 +1,17 @@
+install: scripts/install-tools.cmd
+build_script: scripts/build.cmd
+artifacts:
+  - path: diskimage.zip
+    name: any pi full disk image
+  - path: kernel.img.zip
+    name: pi needs 3 more files
+  - path: kernel7.img.zip
+    name: pi2/3 needs 3 more files
+cache:
+  - c:\FPC    -> scripts/install-fpc.cmd
+  - c:\Ultibo -> scripts/install-ultibo.cmd
+  - bootfiles -> scripts/install-bootfiles.cmd
+skip_commits:
+  files:
+    - docs/**/*
+    - README.md
