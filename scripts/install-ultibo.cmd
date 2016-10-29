@@ -34,6 +34,6 @@ if exist c:\Ultibo goto :installed
     setlocal
     call __buildrtl.bat
     endlocal
-    cd c:\projects\freepascal-appveyor
+    cd c:\projects\armtimer-fiq-pascal-rpizero-ultibo
 
 :installed
