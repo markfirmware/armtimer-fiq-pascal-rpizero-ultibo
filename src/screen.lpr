@@ -2,7 +2,7 @@ program Screen;
 
 uses
  {$ifdef ULTIBO}
-  {$include UltiboImplementationUnits.inc}
+  {$include UltiboImplementationUnits.inc},
   DwcOtg,
   Keyboard,
   UltiboCrtSurrogate,
@@ -33,7 +33,7 @@ begin
  Sleep(3000);
  Quiet:=False;
  SdCardIsPresent:=True;
- FrameCounter:=TEventCounter.Create;
+ FrameCounter:=TEventCounter.CreateHighPrecision;
  CursorOff;
  ClrScr;
  while True do
@@ -55,6 +55,8 @@ begin
    if Quiet then
     WriteLn('Quiet')
    else
-    WriteLn(Format('      Frames %7.3f Hz %7.3f us   %s',[FrameCounter.Hertz,FrameCounter.Period * 1000*1000,SdCardString]));
+    begin
+     WriteLn(Format('      Frames %7.3f Hz %7.3f ms   %s',[FrameCounter.Hertz,FrameCounter.Period * 1000,SdCardString]));
+    end;
   end;
 end.

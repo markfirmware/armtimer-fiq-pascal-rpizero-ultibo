@@ -4,33 +4,36 @@ unit EventCounter;
 interface
 type
  TCounterWithHertz=class
-  function Count:LongWord; virtual; abstract;
+  function Count:Int64; virtual; abstract;
   function Hertz:Double; virtual;
   function Period:Double; virtual;
  end;
  TTickCounter=class(TCounterWithHertz)
-  function Count:LongWord; override;
+  function Count:Int64; override;
   function Hertz:Double; override;
  end;
  TTimeCounter=class(TCounterWithHertz)
-  function Count:LongWord; override;
+  function Count:Int64; override;
   function Hertz:Double; override;
  end;
  TArmTimerCounter=class(TCounterWithHertz)
-  function Count:LongWord; override;
+  class var LastArmTimerCount32:LongWord;
+  class var ArmTimerJustUpper:Int64;
+  class procedure InitializeClass;
+  class function Count32:LongWord;
+  function Count:Int64; override;
   function Hertz:Double; override;
-  class procedure InitializeControlRegister;
  end;
  TEventCounter=class(TCounterWithHertz)
-  EventCount:LongWord;
-  ReferenceCountAtFirstEvent:LongWord;
-  ReferenceCountAtLastEvent:LongWord;
+  EventCount:Int64;
+  ReferenceCountAtFirstEvent:Int64;
+  ReferenceCountAtLastEvent:Int64;
   ReferenceCounter:TCounterWithHertz;
   class function  Create:TEventCounter;
   class function  CreateHighPrecision:TEventCounter;
   constructor Create(SomeReferenceCounter:TCounterWithHertz);
   procedure Increment;
-  function Count:LongWord; override;
+  function Count:Int64; override;
   function Hertz:Double; override;
   procedure Reset;
  end;
@@ -38,15 +41,8 @@ type
 implementation
 uses
 {$ifdef ULTIBO}
- {$ifdef BUILD_RPI}
-  bcm2835,
- {$endif}
- {$ifdef BUILD_RPI2}
-  bcm2836,
- {$endif}
- devices, globalconst,
+ {$include UltiboImplementationUnits.inc};
 {$endif}
- sysutils;
 {$ifndef ULTIBO}
  const
   TIME_TICKS_PER_SECOND=1000;
@@ -70,15 +66,15 @@ function TTickCounter.Hertz:Double;
 begin
  Hertz:=TIME_TICKS_PER_SECOND;
 end;
-function TTickCounter.Count:LongWord;
+function TTickCounter.Count:Int64;
 begin
- Count:=GetTickCount;
+ Count:=GetTickCount64;
 end;
 function TTimeCounter.Hertz:Double;
 begin
  Hertz:=1000;
 end;
-function TTimeCounter.Count:LongWord;
+function TTimeCounter.Count:Int64;
 var
  SystemTime:TSystemTime;
 begin
@@ -92,10 +88,12 @@ begin
  Count:=Count * 1000;
  Inc(Count,SystemTime.Millisecond);
 end;
-class procedure TArmTimerCounter.InitializeControlRegister;
+class procedure TArmTimerCounter.InitializeClass;
 var
  ControlRegister:LongWord;
 begin
+ LastArmTimerCount32:=0;
+ ArmTimerJustUpper:=0;
  {$ifdef ULTIBO}
   {$ifdef BUILD_RPI}
    ControlRegister:=PBCM2835ARMTimerRegisters(TimerDeviceGetDefault^.Address)^.Control;
@@ -114,18 +112,28 @@ begin
   ControlRegister:=ControlRegister;
  {$endif}
 end;
-function TArmTimerCounter.Count:LongWord;
+class function TArmTimerCounter.Count32:LongWord;
 begin
  {$ifdef ULTIBO}
   {$ifdef BUILD_RPI}
-   Count:=PBCM2835ARMTimerRegisters(TimerDeviceGetDefault^.Address)^.Counter;
+   Count32:=PBCM2835ARMTimerRegisters(TimerDeviceGetDefault^.Address)^.Counter;
   {$endif}
   {$ifdef BUILD_RPI2}
-   Count:=PBCM2836ARMTimerRegisters(TimerDeviceGetDefault^.Address)^.Counter;
+   Count32:=PBCM2836ARMTimerRegisters(TimerDeviceGetDefault^.Address)^.Counter;
   {$endif}
  {$else}
-  Count:=0;
+  Count32:=0;
  {$endif}
+end;
+function TArmTimerCounter.Count:Int64;
+var
+ Previous:LongWord;
+begin
+ Previous:=LastArmTimerCount32;
+ LastArmTimerCount32:=TArmTimerCounter.Count32;
+ if LastArmTimerCount32 < Previous then
+  Inc(ArmTimerJustUpper,$100000000);
+ Count:=ArmTimerJustUpper or LastArmTimerCount32;
 end;
 function TArmTimerCounter.Hertz:Double;
 begin
@@ -148,7 +156,7 @@ class function TEventCounter.CreateHighPrecision:TEventCounter;
 begin
  CreateHighPrecision:=TEventCounter.Create(TArmTimerCounter.Create);
 end;
-function TEventCounter.Count:LongWord;
+function TEventCounter.Count:Int64;
 begin
  Count:=EventCount;
 end;
@@ -175,5 +183,5 @@ begin
 end;
 
 initialization
- TArmTimerCounter.InitializeControlRegister;
+ TArmTimerCounter.InitializeClass;
 end.
