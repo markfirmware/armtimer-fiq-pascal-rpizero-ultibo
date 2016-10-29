@@ -38,7 +38,13 @@ type
 implementation
 uses
 {$ifdef ULTIBO}
- bcm2835, devices, globalconst,
+ {$ifdef BUILD_RPI}
+  bcm2835,
+ {$endif}
+ {$ifdef BUILD_RPI2}
+  bcm2837,
+ {$endif}
+ devices, globalconst,
 {$endif}
  sysutils;
 {$ifndef ULTIBO}
