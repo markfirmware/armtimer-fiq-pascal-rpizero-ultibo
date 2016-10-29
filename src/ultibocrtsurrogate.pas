@@ -4,24 +4,31 @@ interface
 procedure ClrScr;
 procedure CursorOff;
 procedure GotoXY(X,Y:Integer);
+procedure Halt(StatusCode:Integer);
 function KeyPressed:Boolean;
 function ReadKey:String;
 
 implementation
 uses
- Console;
+ Console, GlobalConst, GlobalTypes;
+
+var
+ Window:TWindowHandle;
 
 procedure ClrScr;
 begin
- ConsoleClrScr;
+ ConsoleWindowClear(Window);
 end;
 procedure CursorOff;
 begin
-// ConsoleCursorOff;
+ ConsoleWindowCursorOff(Window);
 end;
 procedure GotoXY(X,Y:Integer);
 begin
- ConsoleGotoXY(X,Y);
+ ConsoleWindowSetXY(Window,X,Y);
+end;
+procedure Halt(StatusCode:Integer);
+begin
 end;
 function KeyPressed:Boolean;
 begin
@@ -31,4 +38,11 @@ function ReadKey:String;
 begin
  ReadKey:=ConsoleReadKey;
 end;
+procedure WriteLn(Line:String);
+begin
+ ConsoleWindowWriteLn(Window,Line);
+end;
+
+initialization
+ Window:=ConsoleWindowCreate(ConsoleDeviceGetDefault,CONSOLE_POSITION_FULL,True);
 end.

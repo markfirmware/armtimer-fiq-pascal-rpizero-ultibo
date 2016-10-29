@@ -1,13 +1,38 @@
 program Screen;
 
-uses {$ifdef ULTIBO} UltiboCrtSurrogate {$else} Crt {$endif}, EventCounter, SysUtils;
+uses
+ {$ifdef ULTIBO}
+  {$include UltiboImplementationUnits.inc}
+  DwcOtg,
+  Keyboard,
+  UltiboCrtSurrogate,
+ {$else}
+  Crt,
+ {$endif}
+ EventCounter;
 
 var
  FrameCounter:TEventCounter;
  Quiet:Boolean;
+ SdCardIsPresent,SdCardWasPresent:Boolean;
+ SdCardString:String;
+
+procedure UpdateSdCard;
+begin
+ SdCardWasPresent:=SdCardIsPresent;
+ SdCardIsPresent:=DirectoryExists('c:');
+ if SdCardIsPresent then
+  SdCardString:='Y'
+ else
+  SdCardString:='N';
+ if SdCardIsPresent and not SdCardWasPresent then
+  SystemRestart(100);
+end;
 
 begin
+ Sleep(3000);
  Quiet:=False;
+ SdCardIsPresent:=True;
  FrameCounter:=TEventCounter.Create;
  CursorOff;
  ClrScr;
@@ -24,16 +49,12 @@ begin
         'z': FrameCounter.Reset;
        end;
       end;
+     UpdateSdCard;
     end;
+   GotoXY(1,1);
    if Quiet then
-    begin
-     GotoXY(1,2);
-     WriteLn('Quiet');
-    end
+    WriteLn('Quiet')
    else
-    begin
-     GotoXY(1,1);
-     WriteLn(Format('Frames %7.3f Hz %7.3f ms   ',[FrameCounter.Hertz,FrameCounter.Period * 1000]));
-    end;
+    WriteLn(Format('      Frames %7.3f Hz %7.3f us   %s',[FrameCounter.Hertz,FrameCounter.Period * 1000*1000,SdCardString]));
   end;
 end.
