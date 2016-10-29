@@ -42,7 +42,7 @@ uses
   bcm2835,
  {$endif}
  {$ifdef BUILD_RPI2}
-  bcm2837,
+  bcm2836,
  {$endif}
  devices, globalconst,
 {$endif}
@@ -97,10 +97,18 @@ var
  ControlRegister:LongWord;
 begin
  {$ifdef ULTIBO}
-  ControlRegister:=PBCM2835ARMTimerRegisters(TimerDeviceGetDefault^.Address)^.Control;
-  ControlRegister:=ControlRegister and not BCM2835_ARM_TIMER_CONTROL_COUNTER_PRESCALE;
-  ControlRegister:=ControlRegister or BCM2835_ARM_TIMER_CONTROL_COUNTER_ENABLED;
-  PBCM2835ARMTimerRegisters(TimerDeviceGetDefault^.Address)^.Control:=ControlRegister;
+  {$ifdef BUILD_RPI}
+   ControlRegister:=PBCM2835ARMTimerRegisters(TimerDeviceGetDefault^.Address)^.Control;
+   ControlRegister:=ControlRegister and not BCM2835_ARM_TIMER_CONTROL_COUNTER_PRESCALE;
+   ControlRegister:=ControlRegister or BCM2835_ARM_TIMER_CONTROL_COUNTER_ENABLED;
+   PBCM2835ARMTimerRegisters(TimerDeviceGetDefault^.Address)^.Control:=ControlRegister;
+  {$endif}
+  {$ifdef BUILD_RPI2}
+   ControlRegister:=PBCM2836ARMTimerRegisters(TimerDeviceGetDefault^.Address)^.Control;
+   ControlRegister:=ControlRegister and not BCM2836_ARM_TIMER_CONTROL_COUNTER_PRESCALE;
+   ControlRegister:=ControlRegister or BCM2836_ARM_TIMER_CONTROL_COUNTER_ENABLED;
+   PBCM2836ARMTimerRegisters(TimerDeviceGetDefault^.Address)^.Control:=ControlRegister;
+  {$endif}
  {$else}
   ControlRegister:=0;
   ControlRegister:=ControlRegister;
@@ -109,7 +117,12 @@ end;
 function TArmTimerCounter.Count:LongWord;
 begin
  {$ifdef ULTIBO}
-  Count:=PBCM2835ARMTimerRegisters(TimerDeviceGetDefault^.Address)^.Counter;
+  {$ifdef BUILD_RPI}
+   Count:=PBCM2835ARMTimerRegisters(TimerDeviceGetDefault^.Address)^.Counter;
+  {$endif}
+  {$ifdef BUILD_RPI2}
+   Count:=PBCM2836ARMTimerRegisters(TimerDeviceGetDefault^.Address)^.Counter;
+  {$endif}
  {$else}
   Count:=0;
  {$endif}
